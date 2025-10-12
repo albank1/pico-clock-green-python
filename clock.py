@@ -4,19 +4,16 @@ from display import Display
 from rtc import RTC
 from buttons import Buttons
 from configuration import Configuration
-from wifi import WLAN
 import helpers
 import time
 import ntptime
 import localPTZtime
-
 
 class Clock(App):
     def __init__(self, scheduler):
         App.__init__(self, APP_CLOCK)
         self.config = Configuration()
         self.wifi_config = Configuration().wifi_config
-        self.wlan = WLAN(scheduler)
         self.display = Display(scheduler)
         self.rtc = RTC()
         self.enabled = True
@@ -46,10 +43,8 @@ class Clock(App):
             await self.update_time()
             if self.should_blink():
                 if self.second % 2 == 0:
-                    # makes : display
                     self.display.show_char(":", pos=10)
                 else:
-                    # makes : not display
                     self.display.show_char(" :", pos=10)
 
     def should_blink(self):
@@ -63,7 +58,7 @@ class Clock(App):
                 print("NTP time sync failed")
                 return False
 
-            local_time= localPTZtime.tztime(time.time(), self.wifi_config.ntp_ptz)
+            local_time = localPTZtime.tztime(time.time(), self.wifi_config.ntp_ptz)
             self.rtc.save_time(local_time[:8])
             return True
         return False
@@ -75,19 +70,63 @@ class Clock(App):
             self.hour = t[3]
             self.minute = t[4]
 
-            if self.minute % 5 == 0 and self.second == 0:
-                if not self.wlan.wifi_connected():
-                    self.wlan.connect_to_wifi() # Reconnect to WiFi every 5 minutes if not connected
-
             if self.minute == 10 and self.second == 0:
-                if self.ntp_sync(): # Sync time via NTP every hour at HH:10:00
+                if self.ntp_sync():
                     print("NTP time sync successful")
 
             self.show_time_icon()
             self.display.show_day(t[6])
             await self.show_time()
         elif t[5] == 20 and self.config.show_temp:
+            await self.show_message_or_temp()
+
+    async def show_message_or_temp(self):
+        """
+        Show special holiday greetings on certain dates,
+        otherwise show the temperature.
+        """
+        t = self.rtc.get_time()
+        year, month, day = t[0], t[1], t[2]
+
+        # --- Fixed-date greetings ---
+        if month == 12 and day == 25:
+            await self.display.show_message("Happy Christmas")
+        elif month == 4 and day >= 1 and day <= 30:
+            # Easter varies — this just checks April (simplified)
+            easter_date = self.get_easter_date(year)
+            if day == easter_date[2] and month == easter_date[1]:
+                await self.display.show_message("Happy Easter")
+            else:
+                await self.show_temperature()
+        elif month == 4 and day == 23:
+            await self.display.show_message("Happy St Georges Day")
+        elif month == 3 and day == 10:
+            await self.display.show_message("Happy Mario Day")       
+        else:
             await self.show_temperature()
+
+    def get_easter_date(self, year):
+        """
+        I need to check this
+        
+        Returns a tuple (year, month, day) for Easter Sunday.
+        Computed using the Anonymous Gregorian algorithm.
+        """
+        a = year % 19
+        b = year // 100
+        c = year % 100
+        d = b // 4
+        e = b % 4
+        f = (b + 8) // 25
+        g = (b - f + 1) // 3
+        h = (19 * a + b - d - g + 15) % 30
+        i = c // 4
+        k = c % 4
+        l = (32 + 2 * e + 2 * i - h - k) % 7
+        m = (a + 11 * h + 22 * l) // 451
+        month = (h + l - 7 * m + 114) // 31
+        day = ((h + l - 7 * m + 114) % 31) + 1
+        return (year, month, day)
 
     async def show_time(self):
         hour = self.hour
@@ -109,7 +148,7 @@ class Clock(App):
         await self.display.show_temperature(temp)
 
     async def temp_callback(self):
-        await self.show_temperature()
+        await self.show_message_or_temp()
 
     async def switch_temperature_callback(self):
         self.config.switch_temp_value()
