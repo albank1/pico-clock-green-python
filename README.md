@@ -1,6 +1,6 @@
 # MicroPython Pico-Clock-Green
 
-This is a fork built on excelletn work by the following:
+This is a fork built on excellent work by the following:
 
 > Dom Needham: Python port of the C code for the Waveshare [Pico-Clock-Green](https://www.waveshare.com/wiki/Pico-Clock-Green) product with support for MQTT (majority to be added) via the Pico W.
 
