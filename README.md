@@ -13,11 +13,11 @@ This additional code is not as well written as it should be and I will try and a
 a) now many neopixels
 b) a special user defined message
 
-My code adds the ability to run a neopixel (this has been added to main.py). This runs asyncronisly through the colours of the rainbow and does not affect the other functions. The data control pin for the neopixel / neopixel strip is connected to GPIO Pin 0 (Pin 1 of the PICO). The power is connected to the 5V and GND (I am using a 5V neopixel strip).
+My code adds the ability to run a neopixel (this has been added to main.py). This runs asyncronisly through the colours of the rainbow and does not affect the other functions. The data control pin for the neopixel / neopixel strip is connected to GPIO Pin 0 (Pin 1 of the PICO). The power is connected to the 5V (VSYS, Pin 39 of the PICO) and GND, where I am using a 5V neopixel strip.
 
 I have added additional code to clock.py to display a message instead of the temperature value on different occassions eg Christmas and Easter and St George's Day. In order to display lower case letters I have added these to the characters in display.py
 
-I have connected a DFPlayer GPIO 1 (Pin 2) on the PICO
+I have connected a DFPlayer GPIO 1 (Pin 2) on the PICO. This is very basic as it means the software just activates the DFPlayer to play a MP3, which only really works if there is only 1 file on the inserted micro SD card.
 
 ## Instructions (Windows)
 a) Download the uf2 for your particular PICO.
